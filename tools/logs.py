@@ -61,18 +61,3 @@ def init_logger(logger_name: str = None, level: int = None, logger_format: str =
     logger.setLevel(level)
     logger.propagate = False
     return logger
-
-
-# Запуск логов для описания тестов
-def init_main_logs(text_to_log: str = None):
-    from rpamini.config import logger
-    test_number_file = "test_number.txt"
-    try:
-        with open(test_number_file, 'r') as file:
-            test_number = int(file.read()) + 1
-    except FileNotFoundError:
-        test_number = 1
-        pass
-    logger.info(f'Test № {test_number}\n{text_to_log}\n')
-    with open(test_number_file, 'w') as file:
-        file.write(str(test_number))

@@ -100,7 +100,7 @@ class App:
     class Element:
         keys = AppKeys
 
-        def __init__(self, self: UIAWrapper, debug=False, logger=None):
+        def __init__(self, element: UIAWrapper, debug=False, logger=None):
             self.element = element
             self.debug = debug
             self.logger = logger

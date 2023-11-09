@@ -1,3 +1,4 @@
+import socket
 import sys
 from pathlib import Path
 
@@ -20,7 +21,9 @@ local_path.mkdir(exist_ok=True, parents=True)
 local_env_path = local_path.joinpath('env.json')
 if not local_env_path.is_file():
     json_write(local_env_path, {
-
+        "global_path": "\\\\172.16.8.87\\d\\.rpa",
+        "global_username": "rpa.robot",
+        "global_password": "Aa1234567"
     })
 local_env_data = json_read(local_env_path)
 process_list_path = local_path.joinpath('process_list.json')
@@ -61,12 +64,40 @@ postgre_ip = global_env_data['postgre_ip']
 postgre_port = global_env_data['postgre_port']
 
 # ? PROJECT
-project_name = 'Test_report_gold'  # ! FIXME
+robot_name = 'robot-ismet-vyvod-iz-oborota'  # ! FIXME
 chat_id = ''  # ! FIXME
 
-project_path = global_path.joinpath(f'.agent').joinpath(project_name).joinpath(get_hostname())
+project_path = global_path.joinpath(f'.agent').joinpath(robot_name).joinpath(get_hostname())
 project_path.mkdir(exist_ok=True, parents=True)
 config_path = project_path.joinpath('config.json')
 
+# config_path = local_path.joinpath(f'.agent\\{robot_name}\\config.json')
+# config_data = json_read(config_path)
+# chat_id = config_data['chat_id']
+# main_folder = config_data['main_folder']
+# mapping_file = config_data['mapping_file']
+
+ip_address = socket.gethostbyname(socket.gethostname())
+
+# saving_path = global_path.joinpath(f".agent\\{robot_name}\\Output")
+# saving_path.mkdir(exist_ok=True, parents=True)
+# saving_path_1c = global_path.joinpath(f".agent\\{robot_name}\\Output\\Выгрузка 1Т из 1С")
+# saving_path_1c.mkdir(exist_ok=True, parents=True)
+
+download_path = Path.home().joinpath('downloads')
+working_path = root_path.joinpath('working_path')
+working_path.mkdir(exist_ok=True, parents=True)
+
+engine_kwargs = {
+    'username': global_env_data['postgre_db_username'],
+    'password': global_env_data['postgre_db_password'],
+    'host': global_env_data['postgre_ip'],
+    'port': global_env_data['postgre_port'],
+    'base': 'orchestrator'
+}
+
+
 log_path = project_path.joinpath(f'{sys.argv[1]}.log' if len(sys.argv) > 1 else 'dev.log')
 logger = init_logger(tg_token=tg_token, chat_id=chat_id, log_path=log_path)
+
+

@@ -14,6 +14,6 @@ def net_use(path: Union[Path, str], username: str, password: str, delete_all=Fal
     command = rf'net use "{path}" /user:{username} {password}'.replace(r'\\\\', r'\\')
     result = subprocess.run(command, shell=True, capture_output=True, encoding='cp866')
     if len(result.stderr):
-        print('net_use', path, ' '.join(str(result.stdout).split(sep=None)))
+        print('net_use', path, ' '.join(str(result.stdout).split(sep=None)), sep=' ')
     if len(result.stdout):
-        print('net_use', path, ' '.join(str(result.stdout).split(sep=None)))
+        print('net_use', path, ' '.join(str(result.stdout).split(sep=None)), sep=' ')

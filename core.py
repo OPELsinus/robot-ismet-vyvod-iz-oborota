@@ -10,7 +10,7 @@ from selenium import webdriver
 from selenium.webdriver.chrome.service import Service
 from win32gui import GetCursorInfo
 
-from config import odines_username_rpa, odines_password_rpa, sed_username, sed_papissword, sprut_username, sprut_password
+from config import odines_username_rpa, odines_password_rpa, sed_username, sed_password, sprut_username, sprut_password
 from config import process_list_path
 from tools.app import App
 from tools.clipboard import clipboard_set, clipboard_get
@@ -67,7 +67,7 @@ class Sprut(App):
             "visible_only": True, "enabled_only": True, "found_index": 0
         }).type_keys('~', clear=False)
         self.parent_switch({
-            "title_re": f"^.*{value}.*$", "class_name": "Treport_frm_main", "control_type": "Window",
+            "title_re": f"^.*{value}.*$", "class_name": "Tperson_fm_Main", "control_type": "Window",
             "visible_only": True, "enabled_only": True, "found_index": 0, "parent": None
         })
 
