@@ -182,7 +182,7 @@ class App:
                 keys = ''.join(str(v) if n else replace(str(v)) for n, v in enumerate(value))
             else:
                 keys = ''.join(str(v) for v in value)
-            self.element.type_keys(keys, pause=0.03, with_spaces=True, with_tabs=True, with_newlines=True,
+            self.element.type_keys(keys, pause=0.01, with_spaces=True, with_tabs=True, with_newlines=True,
                                    set_foreground=set_focus)
 
         def find_elements(self, selector, timeout: Union[int, float] = 60):

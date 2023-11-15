@@ -83,6 +83,7 @@ ip_address = socket.gethostbyname(socket.gethostname())
 # saving_path.mkdir(exist_ok=True, parents=True)
 # saving_path_1c = global_path.joinpath(f".agent\\{robot_name}\\Output\\Выгрузка 1Т из 1С")
 # saving_path_1c.mkdir(exist_ok=True, parents=True)
+ecp_paths = r'\\vault.magnum.local\common\Stuff\_06_Бухгалтерия\! Актуальные ЭЦП' # ! FIXME
 
 download_path = Path.home().joinpath('downloads')
 working_path = root_path.joinpath('working_path')

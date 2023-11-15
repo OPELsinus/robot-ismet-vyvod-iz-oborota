@@ -1,14 +1,18 @@
 import datetime
+import os
 from time import sleep
 
 from openpyxl import load_workbook
 
-from config import logger, engine_kwargs, robot_name, smtp_host, smtp_author
+from config import logger, engine_kwargs, robot_name, smtp_host, smtp_author, owa_username, owa_password, ecp_paths
 
 from sqlalchemy import create_engine, Column, Integer, String, DateTime, MetaData, Table, Date, Boolean, select
 from sqlalchemy.orm import declarative_base, sessionmaker
 
-from utils.website import open_ismet_document
+from tools.net_use import net_use
+from utils.fetching import fetching_unique_codes
+from utils.parse_gtins import parse_all_gtins_to_out
+from utils.website import ismet_auth, load_document_to_out
 
 Base = declarative_base()
 
@@ -58,6 +62,27 @@ if __name__ == '__main__':
     #     ))
     # session.commit()
 
-    open_ismet_document(r'\\vault.magnum.local\common\Stuff\_06_Бухгалтерия\! Актуальные ЭЦП\Торговый зал АФ №68\AUTH_RSA256_e6a89349ddb123800cd7e20da7ab61ee51b86c10.p12')
+    net_use(ecp_paths, owa_username, owa_password)
 
+    for folder in os.listdir(ecp_paths):
+
+        if folder != 'Торговый зал АФ №68':
+            continue
+
+        ecp_auth, ecp_sign = None, None
+        folder_ = os.path.join(ecp_paths, folder)
+        for file in os.listdir(folder_):
+
+            if 'AUTH' in file:
+                ecp_auth = os.path.join(folder_, file)
+            if 'GOST' in file:
+                ecp_sign = os.path.join(folder_, file)
+
+        urls = fetching_unique_codes(branch=folder)
+
+        web = ismet_auth(ecp_auth=ecp_auth, ecp_sign=ecp_sign)
+
+        parse_all_gtins_to_out(web=web, urls=urls)
+
+        load_document_to_out(web=web, year=2023, month=10, day=13)
 
