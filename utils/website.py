@@ -1,3 +1,4 @@
+from contextlib import suppress
 from time import sleep
 
 
@@ -47,11 +48,15 @@ def ismet_auth(ecp_auth: str, ecp_sign: str):
     return web
 
 
-def load_document_to_out(web: Web, year: int = None, month: int = None, day: int = None):
+def load_document_to_out(web: Web, filepath: str, year: int = None, month: int = None, day: int = None):
+
+    print()
+
+    web.get('https://goods.prod.markirovka.ismet.kz/documents/list')
 
     selector = '//span[text()="Добавить документ"]'
     web.find_element(selector).click()
-
+    sleep(0.3)
     web.find_element('//li[contains(text(), "Уведомление о выводе из оборота")]').click()
 
     print()
@@ -59,10 +64,10 @@ def load_document_to_out(web: Web, year: int = None, month: int = None, day: int
     web.find_element("//li[contains(text(), 'Розничная продажа')]").click()
 
     web.find_element("//label[contains(text(), 'Наименование документа основания')]/following-sibling::div").click()
-    web.find_element("//label[contains(text(), 'Наименование документа основания')]/following-sibling::div/input").type_keys('Тест')
+    web.find_element("//label[contains(text(), 'Наименование документа основания')]/following-sibling::div/input").type_keys('Чек продажи')
 
     web.find_element("//label[contains(text(), 'Номер документа основания')]/following-sibling::div").click()
-    web.find_element("//label[contains(text(), 'Номер документа основания')]/following-sibling::div/input").type_keys('1')
+    web.find_element("//label[contains(text(), 'Номер документа основания')]/following-sibling::div/input").type_keys('-')
 
     web.find_element("//label[contains(text(), 'Дата документа основания')]/following-sibling::div/input").click()
     web.wait_element("//span[contains(text(), 'Применить')]")
@@ -83,10 +88,80 @@ def load_document_to_out(web: Web, year: int = None, month: int = None, day: int
 
     web.find_element("//span[contains(text(), 'ДОБАВИТЬ ТОВАР')]").click()
 
-    web.find_element("//div[contains(text(), 'Выбрать из списка')]").click()
+    web.find_element("//div[contains(text(), 'Загрузить из файла')]").click()
+
+    web.find_element("//div[contains(text(), 'Перетащите или выберите файл')]").click()
+
+    # * Opening a file with codes to dropout
+
+    app = App('')
+
+    app.find_element({"title": "Имя файла:", "class_name": "Edit", "control_type": "Edit",
+                      "visible_only": True, "enabled_only": True, "found_index": 0}).click(set_focus=True)
+
+    app.find_element({"title": "Имя файла:", "class_name": "Edit", "control_type": "Edit",
+                      "visible_only": True, "enabled_only": True, "found_index": 0}).type_keys(filepath)
+
+    app.find_element({"title": "Открыть", "class_name": "Button", "control_type": "Button",
+                      "visible_only": True, "enabled_only": True, "found_index": 0}).click()
 
     print()
 
 
+def select_all_wares_to_dropout(web: Web, ecp_sign: str):
 
+    timeout_ = 120
 
+    while True:
+
+        web.wait_element("//div[@class='rt-th sc-kkGfuU dzsQrm']/div/div/div", timeout=timeout_)
+
+        if timeout_ == 120:
+            if web.wait_element("//span[text() = 'Отмена']", timeout=3):
+                web.find_element("//span[text() = 'Отмена']", timeout=3).click()
+
+        web.find_element("//div[@class='rt-th sc-kkGfuU dzsQrm']/div/div/div").click()
+
+        try:
+            current_page = int(web.find_element("//li[@class='sc-giadOv ekuBbr']", timeout=5).get_attr('text'))
+        except:
+            break
+
+        available_page = None
+        for pages in web.find_elements("//li[@class='sc-giadOv hALQxM']"):
+            with suppress(Exception):
+                if int(pages.get_attr('text')) > current_page:
+                    available_page = int(pages.get_attr('text'))
+                    break
+
+        if available_page is None:
+            break
+
+        web.find_element(f"//li[text()='{available_page}']", timeout=5).click()
+
+        timeout_ = 5
+
+    print()
+
+    web.find_element('//span[text()="Отправить"]/../..').click()
+    print(ecp_sign)
+    nca = App('')
+    file_element = nca.find_element(file_selector)
+    file_element.type_keys(ecp_sign, set_focus=True, protect_first=True)
+    sleep(1.5)
+    file_element.type_keys(nca.keys.ENTER, set_focus=True)
+    pass_element = nca.find_element(pass_selector)
+    pass_element.type_keys('Aa123456', nca.keys.ENTER, set_focus=True)
+    sleep(1.5)
+    pass_element.type_keys('Aa123456', nca.keys.ENTER, set_focus=True)
+    sleep(1)
+
+    # * Ждём пока портал обработает наш отчёт (Чтобы избежать статуса Проверяется)
+
+    sleep(20)
+
+    web.find_element('(//a[@class="sc-dHIava Fduvs"])[1]').click()
+
+    web.find_element('//button[text()="Печать"]').click()
+
+    print()
