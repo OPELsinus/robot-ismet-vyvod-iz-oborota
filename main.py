@@ -65,7 +65,7 @@ if __name__ == '__main__':
 
     for folder in os.listdir(ecp_paths):
 
-        if folder != 'Торговый зал АФ №40':
+        if folder != 'Торговый зал АСФ №1':
             check_ = True
             continue
 

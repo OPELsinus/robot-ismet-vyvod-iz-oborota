@@ -1,9 +1,13 @@
+import datetime
+import json
+import time
 from contextlib import suppress
 from time import sleep
 
-
+import requests
 from selenium.webdriver.support.expected_conditions import visibility_of_element_located
 
+from config import logger
 from tools.app import App
 from tools.web import Web
 
@@ -42,13 +46,14 @@ def ismet_auth(ecp_auth: str, ecp_sign: str):
     selector = '//span[text()="Добавить документ"]'
 
     # * raise no count
-    if not web.wait_element(selector):
-        raise Exception('Ошибка авторизации')
+    if not web.wait_element(selector, timeout=30):
+        logger.warning('Ошибка авторизации')
+        return None
 
     return web
 
 
-def load_document_to_out(web: Web, filepath: str, year: int = None, month: int = None, day: int = None):
+def load_document_to_out(web: Web, filepath: str, year: int = None, month: int = None, day: int = None, url: str = None):
 
     print()
 
@@ -85,6 +90,53 @@ def load_document_to_out(web: Web, filepath: str, year: int = None, month: int =
     web.execute_script_click_xpath("//span[contains(text(), 'Следующий')]")
 
     # * Next page
+    # print('sending request')
+    # all_cookies = web.driver.get_cookies()
+    # cookies_dict = {}
+    # for cookie in all_cookies:
+    #     cookies_dict[cookie['name']] = cookie['value']
+    #
+    # now = datetime.datetime.utcnow()
+    # formatted_date = time.strftime('%a, %d %b %Y %H:%M:%S GMT', now.timetuple())
+    #
+    # bearer_token = f"{cookies_dict.get('tokenPart1')}{cookies_dict.get('tokenPart2')}"
+    # print("bearer:", bearer_token)
+    # headers = {
+    #     'Authorization': f'Bearer {bearer_token}',
+    #     'Access-Control-Allow-Credentials': 'true',
+    #     'Access-Control-Allow-Origin': 'https://goods.prod.markirovka.ismet.kz',
+    #     'Access-Control-Expose-Headers': 'Authorization, Link, X-Total-Count',
+    #     'Cache-Control': 'no-cache, no-store, max-age=0, must-revalidate',
+    #     'Connection': 'keep-alive',
+    #     'Content-Type': 'application/json;charset=UTF-8',
+    #     'Date': formatted_date,
+    #     'Expires': '0',
+    #     'Pragma': 'no-cache',
+    #     'Server': 'nginx',
+    #     'Vary': 'Access-Control-Request-Headers, Access-Control-Request-Method, Origin',
+    #     'X-Content-Type-Options': 'nosniff',
+    #     'X-Frame-Options': 'DENY',
+    #     'X-Xss-Protection': '1; mode=block'
+    # }
+    #
+    # def send_excel_file(file_path, url, bearer_token, cookies_dict):
+    #     multipart_form_data = {
+    #         'properties': ('blob', json.dumps({"userId": 600128503, "organisationInn": "191041025674"}), 'application/json'),
+    #         'file': ('Торговый зал ШФ №7.xlsx', open(file_path, 'rb'), 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
+    #     }
+    #
+    #     with requests.Session() as session:
+    #         session.cookies.update(cookies_dict)
+    #         response = session.post(url, files=multipart_form_data, headers=headers, verify=False)
+    #
+    #     return response
+    #
+    # # Send the file
+    # response = send_excel_file(filepath, url, bearer_token, cookies_dict)
+    # print(response.status_code)
+    # print(response.text)
+    # print('sent request')
+    # sleep(1000)
 
     web.find_element("//span[contains(text(), 'ДОБАВИТЬ ТОВАР')]").click()
 
@@ -105,18 +157,21 @@ def load_document_to_out(web: Web, filepath: str, year: int = None, month: int =
     app.find_element({"title": "Открыть", "class_name": "Button", "control_type": "Button",
                       "visible_only": True, "enabled_only": True, "found_index": 0}).click()
 
-    print()
+    # print()
 
 
 def select_all_wares_to_dropout(web: Web, ecp_sign: str):
 
-    timeout_ = 120
+    timeout_ = 70
+
+    if web.wait_element("//div[contains(text(), 'Невозможно выполнить запрос')]", timeout=30):
+        raise Exception("Error when loading an Excel")
 
     while True:
 
         web.wait_element("//div[@class='rt-th sc-kkGfuU dzsQrm']/div/div/div", timeout=timeout_)
 
-        if timeout_ == 120:
+        if timeout_ == 70:
             if web.wait_element("//span[text() = 'Отмена']", timeout=3):
                 web.find_element("//span[text() = 'Отмена']", timeout=3).click()
 
@@ -141,7 +196,7 @@ def select_all_wares_to_dropout(web: Web, ecp_sign: str):
 
         timeout_ = 5
 
-    print()
+    # print()
 
     web.find_element('//span[text()="Отправить"]/../..').click()
     print(ecp_sign)
@@ -158,10 +213,10 @@ def select_all_wares_to_dropout(web: Web, ecp_sign: str):
 
     # * Ждём пока портал обработает наш отчёт (Чтобы избежать статуса Проверяется)
 
-    sleep(20)
-
-    web.find_element('(//a[@class="sc-dHIava Fduvs"])[1]').click()
-
-    web.find_element('//button[text()="Печать"]').click()
-
-    print()
+    # sleep(20)
+    #
+    # web.find_element('(//a[@class="sc-dHIava Fduvs"])[1]').click()
+    #
+    # web.find_element('//button[text()="Печать"]').click()
+    #
+    # print()

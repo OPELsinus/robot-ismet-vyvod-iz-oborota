@@ -5,10 +5,6 @@ from tools.web import Web
 
 def parse_all_gtins_to_out(web: Web, url: str):
 
-    all_id_code = []
-    all_gtin_code = []
-    all_goods_name = []
-
     all_goods = dict()
 
     web.get(url)
@@ -47,7 +43,7 @@ def parse_all_gtins_to_out(web: Web, url: str):
                 if int(pages.get_attr('text')) > current_page:
                     available_page = int(pages.get_attr('text'))
                     break
-        # break
+
         if available_page is None:
             break
 
@@ -59,17 +55,4 @@ def parse_all_gtins_to_out(web: Web, url: str):
 
     all_goods.update({url: [id_code, gtin_code, goods_name]})
 
-    # if ind == 2:
-    #     break
-
-    # all_id_code.append(id_code)
-    # all_gtin_code.append(gtin_code)
-    # all_goods_name.append(goods_name)
-
-    # print(all_id_code)
-    # print(all_gtin_code)
-    # print(all_goods_name)
-
-    # print()
-
-    return all_goods # all_id_code, all_gtin_code, all_goods_name
+    return all_goods

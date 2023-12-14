@@ -61,8 +61,8 @@ def fetching_unique_codes(branch: str):
     select_query = (
         session_ismet.query(IsmetTable)
             .filter(IsmetTable.C_NAME_SHOP == branch)
-            .filter(IsmetTable.DATE_INVOICE >= datetime.date(2023, 1, 1))
-            .filter(IsmetTable.DATE_INVOICE <= datetime.date(2023, 5, 31))
+            .filter(IsmetTable.DATE_INVOICE >= datetime.date(2023, 5, 31))
+            .filter(IsmetTable.DATE_INVOICE <= datetime.date(2023, 9, 1))
             .filter(IsmetTable.APPROVE_FLAG == 1)
             .filter(IsmetTable.status == 'Success')
             .filter(or_(IsmetTable.NUMBER_INVOICE.is_(None), IsmetTable.NUMBER_INVOICE.notlike('!%')))
