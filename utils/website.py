@@ -20,37 +20,44 @@ months = ['', 'январь', 'февраль', 'март', 'апрель', 'м�
 
 def ismet_auth(ecp_auth: str, ecp_sign: str):
 
-    web = Web()
-    web.run()
+    for _ in range(3):
 
-    login_url = 'https://elk.prod.markirovka.ismet.kz/login-kep'
-    web.get(login_url)
-    web.find_element('//button[contains(., "Выбрать сертификат")]').click()
+        try:
+            web = Web()
+            web.run()
 
-    # * auth nca
-    nca = App('')
-    file_element = nca.find_element(file_selector)
-    file_element.type_keys(ecp_auth, set_focus=True, protect_first=True)
-    sleep(1.5)
-    file_element.type_keys(nca.keys.ENTER, set_focus=True)
-    pass_element = nca.find_element(pass_selector)
-    pass_element.type_keys('Aa123456', nca.keys.ENTER, set_focus=True)
-    sleep(1.5)
-    pass_element.type_keys('Aa123456', nca.keys.ENTER, set_focus=True)
-    sleep(1)
+            login_url = 'https://elk.prod.markirovka.ismet.kz/login-kep'
+            web.get(login_url)
+            web.find_element('//button[contains(., "Выбрать сертификат")]').click()
 
-    # * check success auth
+            # * auth nca
+            nca = App('')
+            file_element = nca.find_element(file_selector)
+            file_element.type_keys(ecp_auth, set_focus=True, protect_first=True)
+            sleep(1.5)
+            file_element.type_keys(nca.keys.ENTER, set_focus=True)
+            pass_element = nca.find_element(pass_selector)
+            pass_element.type_keys('Aa123456', nca.keys.ENTER, set_focus=True)
+            sleep(1.5)
+            pass_element.type_keys('Aa123456', nca.keys.ENTER, set_focus=True)
+            sleep(1)
 
-    web.get('https://goods.prod.markirovka.ismet.kz/documents/list')
+            # * check success auth
 
-    selector = '//span[text()="Добавить документ"]'
+            web.get('https://goods.prod.markirovka.ismet.kz/documents/list')
 
-    # * raise no count
-    if not web.wait_element(selector, timeout=30):
-        logger.warning('Ошибка авторизации')
-        return None
+            selector = '//span[text()="Добавить документ"]'
 
-    return web
+            # * raise no count
+            if not web.wait_element(selector, timeout=30):
+                logger.warning('Ошибка авторизации')
+                continue
+                # return None
+
+            return web
+        except:
+            logger.warning('Ошибка авторизации')
+            pass
 
 
 def load_document_to_out(web: Web, filepath: str, year: int = None, month: int = None, day: int = None, url: str = None):

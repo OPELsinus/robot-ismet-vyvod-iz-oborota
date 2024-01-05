@@ -1,6 +1,7 @@
 import datetime
 import os
 import shutil
+import time
 from contextlib import suppress
 from pathlib import Path
 from time import sleep
@@ -25,10 +26,9 @@ Base = declarative_base()
 
 class Table(Base):
 
-    __tablename__ = robot_name.replace('-', '_')
+    __tablename__ = "robot_ismet_vyvod_iz_oborota_copy_last_zaeazd" # robot_name.replace('-', '_')
 
     start_time = Column(DateTime, default=None)
-    end_time = Column(DateTime, default=None)
     status = Column(String(128), default=None)
     error_message = Column(String(512), default=None)
 
@@ -127,7 +127,7 @@ if __name__ == '__main__':
 
     check_ = False
 
-    branches = list(os.listdir(ecp_paths))[::2]
+    branches = list(os.listdir(ecp_paths))[::]
 
     # if ip_address == '10.70.2.9':
     #     branches = list(os.listdir(ecp_paths))[1::2]
@@ -136,9 +136,13 @@ if __name__ == '__main__':
     # if ip_address == '172.20.1.24':
     #     branches = list(os.listdir(ecp_paths))[::-1]
 
+    # part_length = len(list(os.listdir(ecp_paths))) // 5
+
     if ip_address == '10.70.2.2':
-        branches = list(os.listdir(ecp_paths))[100::]
+        branches = list(os.listdir(ecp_paths))[::2]
     if ip_address == '10.70.2.9':
+        branches = list(os.listdir(ecp_paths))[1::2]
+    if ip_address == '10.70.2.10':
         branches = list(os.listdir(ecp_paths))[1::2]
     if ip_address == '10.70.2.11':
         branches = list(os.listdir(ecp_paths))[::2]
@@ -147,12 +151,24 @@ if __name__ == '__main__':
 
     for folder in branches:
 
-        # if folder == 'Торговый зал АСФ №29':
-        #     check_ = True
-        #     # continue
+        # if ip_address == '10.70.2.11':
+        #     if folder == 'Торговый зал АСФ №55':
+        #         check_ = True
+        #         # continue
         #
-        # if not check_:
-        #     continue
+        #     if not check_:
+        #         continue
+
+        if folder not in ['Торговый зал АСФ №1', 'Торговый зал АСФ №18', 'Торговый зал АСФ №31', 'Торговый зал АСФ №50', 'Торговый зал АСФ №74', 'Торговый зал АФ №1', 'Торговый зал АФ №11', 'Торговый зал АФ №12', 'Торговый зал АФ №2', 'Торговый зал АФ №24', 'Торговый зал АФ №29', 'Торговый зал АФ №3', 'Торговый зал АФ №32', 'Торговый зал АФ №35', 'Торговый зал АФ №4', 'Торговый зал АФ №40', 'Торговый зал АФ №61', 'Торговый зал АФ №69', 'Торговый зал ТФ №1', 'Торговый зал ШФ №1']: # , 'Торговый зал ЕКФ №1'
+            continue
+
+        # if ip_address == '172.20.1.24':
+        #     if folder == 'Торговый зал АСФ №41':
+        #         check_ = True
+        #         # continue
+        #
+        #     if not check_:
+        #         continue
 
         logger.warning(f"Started {folder}")
 
@@ -181,9 +197,13 @@ if __name__ == '__main__':
         start, end = 0, 1000
         while start < len(vals):
 
-            logger.warning(f"Current slice: {start} - {end}")
+            logger.warning(f"Current slice: {start} - {end} | {len(vals)}")
 
             web = ismet_auth(ecp_auth=ecp_auth, ecp_sign=ecp_sign)
+
+            if web is None:
+                break
+
             val = vals[start:end]
             start = end
             end += 1000
@@ -197,12 +217,18 @@ if __name__ == '__main__':
             last_row = 1
             added_any_row = False
 
+            time_overall_start = time.time()
+            avg_time = 0
+            cc = 0
+
             for val_ in val:
                 # print(val)
                 # print(val_)
                 data_matrix_code = str(val_.split('|-|-|')[0]).strip()
                 name_source = val_.split('|-|-|')[1]
                 date_invoice = val_.split('|-|-|')[2]
+
+                avg_time_start = time.time()
 
                 select_query = (
                     session.query(Table)
@@ -223,23 +249,29 @@ if __name__ == '__main__':
                     start_time=datetime.datetime.now(),
                     status='new',
                     DATA_MATRIX_CODE=data_matrix_code,
-                    GTIN_CODE='',
-                    ID_INVOICE='',
-                    URL_INVOICE='',
-                    NEW_URL_INVOICE='',
-                    FILE_SAVED_PATH='',
-                    NUMBER_INVOICE='',
                     C_NAME_SOURCE_INVOICE=name_source,
                     C_NAME_SHOP=folder,
                     DATE_INVOICE=date_invoice,
-                    NAME_WARES=''
                 ))
+
+                avg_time_end = time.time()
+
+                avg_time += float(avg_time_end - avg_time_start)
+                cc += 1
 
                 added_any_row = True
 
                 if not added_any_row:
                     # logger.info('----- ALREADY IN DB | NEXT -----')
                     continue
+
+            time_overall_end = time.time()
+
+            if cc == 0:
+                cc = 1
+
+            print("Total time to add new rows in db:", time_overall_end - time_overall_start)
+            print("Average time to add new rows in db:", avg_time, avg_time / cc)
 
             if last_row == 1:
                 continue
@@ -299,12 +331,13 @@ if __name__ == '__main__':
 
             sleep(0)
 
+            update_values_list = []
+
             if saved:
+                logger.warning(f'{datetime.datetime.now()} | Marking as Succeed')
                 for val_ in val:
                     data_matrix_code = str(val_.split('|-|-|')[0]).strip()
-                    stmt = update(Table).where(
-                        Table.DATA_MATRIX_CODE == data_matrix_code
-                    ).values(
+                    stmt = update(Table).where(Table.DATA_MATRIX_CODE == data_matrix_code).values(
                         status='success',
                         end_time=datetime.datetime.now(),
                         error_message='',
@@ -314,6 +347,7 @@ if __name__ == '__main__':
                     session.execute(stmt)
 
             else:
+                logger.warning(f'{datetime.datetime.now()} | Marking as Failed')
                 for val_ in val:
                     data_matrix_code = str(val_.split('|-|-|')[0]).strip()
                     stmt = update(Table).where(
@@ -327,14 +361,16 @@ if __name__ == '__main__':
                     )
                     session.execute(stmt)
 
+            logger.warning(f'{datetime.datetime.now()} | Finished marking')
             session.commit()
 
             # Path(file_path).unlink()
 
             web.quit()
 
-        fetching_unique_codes_2022(branch=folder, update_to_success=True)
+        # fetching_unique_codes_2022(branch=folder, update_to_success=True)
 
         logger.info('----- NEXT -----')
 
+    session.close()
 
