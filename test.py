@@ -22,33 +22,6 @@ import urllib.parse
 #     if i not in a:
 #         print(i)
 from openpyxl import load_workbook
+a = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11]
 
-book = load_workbook('kekjon.xlsx')
-sheet = book.active
-
-dict1 = dict()
-dict2 = dict()
-
-for i in range(1, 200):
-    if sheet[f'A{i}'].value is not None:
-        if dict1.get(sheet[f"A{i}"].value) is None:
-            dict1.update({sheet[f"A{i}"].value: sheet[f"B{i}"].value})
-        else:
-            dict1.update({sheet[f"A{i}"].value: max(sheet[f"B{i}"].value, dict1.get(sheet[f"A{i}"].value))})
-
-for i in range(1, 200):
-    if sheet[f'C{i}'].value is not None:
-        dict2.update({sheet[f"C{i}"].value: sheet[f"D{i}"].value})
-
-print(dict1)
-print(dict2)
-
-c = 0
-
-for key, val in dict2.items():
-    if dict1.get(key) is None or dict1.get(key) < val:
-        print(key, dict1.get(key), val)
-        if dict1.get(key) is not None:
-            c += dict1.get(key) - val
-
-print(c)
+print(a[-2::-2])

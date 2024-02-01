@@ -55,9 +55,12 @@ def ismet_auth(ecp_auth: str, ecp_sign: str):
                 # return None
 
             return web
+
         except:
             logger.warning('Ошибка авторизации')
             pass
+
+    return False
 
 
 def load_document_to_out(web: Web, filepath: str, year: int = None, month: int = None, day: int = None, url: str = None):
@@ -171,7 +174,7 @@ def select_all_wares_to_dropout(web: Web, ecp_sign: str):
 
     timeout_ = 70
 
-    if web.wait_element("//div[contains(text(), 'Невозможно выполнить запрос')]", timeout=30):
+    if web.wait_element("//div[contains(text(), 'Невозможно выполнить запрос')]", timeout=2):  # timeout = 30
         raise Exception("Error when loading an Excel")
 
     while True:

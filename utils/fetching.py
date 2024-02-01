@@ -1,6 +1,6 @@
 import datetime
 
-from sqlalchemy import Column, Integer, String, BigInteger, DateTime, create_engine, or_
+from sqlalchemy import Column, Integer, String, BigInteger, DateTime, create_engine, or_, and_
 from sqlalchemy.orm import sessionmaker, declarative_base
 
 from config import global_env_data
@@ -61,11 +61,13 @@ def fetching_unique_codes(branch: str):
     select_query = (
         session_ismet.query(IsmetTable)
             .filter(IsmetTable.C_NAME_SHOP == branch)
-            .filter(IsmetTable.DATE_INVOICE >= datetime.date(2023, 5, 31))
-            .filter(IsmetTable.DATE_INVOICE <= datetime.date(2023, 9, 1))
+            .filter(IsmetTable.DATE_INVOICE >= datetime.date(2023, 11, 1))
+            .filter(IsmetTable.DATE_INVOICE <= datetime.date(2023, 12, 31))
             .filter(IsmetTable.APPROVE_FLAG == 1)
             .filter(IsmetTable.status == 'Success')
-            .filter(or_(IsmetTable.NUMBER_INVOICE.is_(None), IsmetTable.NUMBER_INVOICE.notlike('!%')))
+            # .filter(and_(IsmetTable.NUMBER_INVOICE.is_not(None), IsmetTable.NUMBER_INVOICE.notlike('!%')))
+            .filter(IsmetTable.NUMBER_INVOICE.is_not(None))
+            .filter(IsmetTable.NUMBER_INVOICE.notlike('!%'))
             .all()
     )
 
@@ -75,7 +77,7 @@ def fetching_unique_codes(branch: str):
     vals = dict()
     for ind, row in enumerate(select_query):
         vals.update({row.URL_INVOICE: [row.ID_INVOICE, row.NUMBER_INVOICE, row.C_NAME_SOURCE_INVOICE, row.C_NAME_SHOP, row.DATE_INVOICE]})
-        # print(ind, [row.ID_INVOICE, row.NUMBER_INVOICE, row.C_NAME_SOURCE_INVOICE, row.C_NAME_SHOP, row.DATE_INVOICE])
+        print(ind, row.URL_INVOICE, [row.ID_INVOICE, row.NUMBER_INVOICE, row.C_NAME_SOURCE_INVOICE, row.C_NAME_SHOP, row.DATE_INVOICE])
         # values.append([row.ID_INVOICE, row.NUMBER_INVOICE, row.C_NAME_SOURCE_INVOICE, row.C_NAME_SHOP, row.DATE_INVOICE])
         # urls.append(row.URL_INVOICE)
         # id_invoice.append(row.ID_INVOICE)
@@ -86,4 +88,4 @@ def fetching_unique_codes(branch: str):
 
     session_ismet.close()
 
-    return vals # np.unique(urls), np.unique(id_invoice), np.unique(num_invoice), np.unique(c_name), np.unique(name_shop), np.unique(date_invoice)
+    return vals  # np.unique(urls), np.unique(id_invoice), np.unique(num_invoice), np.unique(c_name), np.unique(name_shop), np.unique(date_invoice)

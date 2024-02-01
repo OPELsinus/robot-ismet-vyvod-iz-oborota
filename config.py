@@ -66,6 +66,8 @@ postgre_port = global_env_data['postgre_port']
 # ? PROJECT
 robot_name = 'robot-ismet-vyvod-iz-oborota'  # ! FIXME
 chat_id = ''  # ! FIXME
+ip_address = socket.gethostbyname(socket.gethostname())
+
 
 project_path = global_path.joinpath(f'.agent').joinpath(robot_name).joinpath(get_hostname())
 project_path.mkdir(exist_ok=True, parents=True)

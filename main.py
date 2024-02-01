@@ -1,12 +1,13 @@
 import datetime
 import os
+import traceback
 from time import sleep
 import pandas as pd
 import win32com.client as win32
 
 from openpyxl import load_workbook, Workbook
 
-from config import logger, engine_kwargs, robot_name, smtp_host, smtp_author, owa_username, owa_password, ecp_paths
+from config import logger, engine_kwargs, robot_name, smtp_host, smtp_author, owa_username, owa_password, ecp_paths, working_path, ip_address
 
 from sqlalchemy import create_engine, Column, Integer, String, DateTime, MetaData, Table, Date, Boolean, select, update
 from sqlalchemy.orm import declarative_base, sessionmaker
@@ -17,12 +18,14 @@ from utils.parse_gtins import parse_all_gtins_to_out
 from utils.wait_report import wait_report_to_download
 from utils.website import ismet_auth, load_document_to_out, select_all_wares_to_dropout
 
+from tools.app import App
+
 Base = declarative_base()
 
 
 class Table(Base):
 
-    __tablename__ = robot_name.replace('-', '_')
+    __tablename__ = 'robot_ismet_vyvod_iz_oborota1' # robot_name.replace('-', '_')
 
     start_time = Column(DateTime, default=None)
     end_time = Column(DateTime, default=None)
@@ -63,147 +66,193 @@ if __name__ == '__main__':
 
     check_ = False
 
-    for folder in os.listdir(ecp_paths):
+    branches = os.listdir(ecp_paths)
 
-        if folder != 'Торговый зал АСФ №1':
-            check_ = True
-            continue
+    if ip_address == '10.70.2.11':
+        branches = branches[::2]
 
-        # if not check_:
-        #     continue
+    if ip_address == '10.70.2.9':
+        branches = branches[1::2]
 
-        ecp_auth, ecp_sign = None, None
-        folder_ = os.path.join(ecp_paths, folder)
-        for file in os.listdir(folder_):
+    if ip_address == '10.70.2.2':
+        branches = branches[-2::-2]
 
-            if 'AUTH' in file:
-                ecp_auth = os.path.join(folder_, file)
-            if 'GOST' in file:
-                ecp_sign = os.path.join(folder_, file)
+    if ip_address == '172.20.1.24':
+        branches = branches[-1::-2]
 
-        urls: dict = fetching_unique_codes(branch=folder)
+    for folder in branches:
 
-        print(folder, len(urls))
-        if len(urls) == 0:
-            continue
-        # continue
-        print(len(urls))
-        for val, key in urls.items():
+        try:
+            # if folder != 'Торговый зал ШФ №9':
+            #     continue
 
-            print(val, key)
+            logger.info(f'Started {folder}')
+            logger.warning(f'Started {folder}')
 
-        web = ismet_auth(ecp_auth=ecp_auth, ecp_sign=ecp_sign)
+            # if folder == 'Торговый зал АСФ №17':
+            #     check_ = True
+            #     # continue
+            #
+            # if not check_:
+            #     continue
 
-        for url in urls:
+            ecp_auth, ecp_sign = None, None
+            folder_ = os.path.join(ecp_paths, folder)
 
-            print(f"----- {url} -----")
-            all_goods: dict = parse_all_gtins_to_out(web=web, url=url)
+            for file in os.listdir(folder_):
 
-            book = Workbook()
-            sheet = book.active
+                if 'AUTH' in file:
+                    ecp_auth = os.path.join(folder_, file)
+                if 'GOST' in file:
+                    ecp_sign = os.path.join(folder_, file)
 
-            last_row = 1
+            urls: dict = fetching_unique_codes(branch=folder)
 
-            added_any_row = False
+            print(folder, len(urls))
+            if len(urls) == 0:
+                continue
+            # continue
+            print(len(urls))
+            for val, key in urls.items():
 
-            for key, val in all_goods.items():
-                print(key, val)
-                for ind1 in range(len(val[0])):
+                print(val, key)
 
-                    select_query = (
-                        session.query(Table)
-                            .filter(Table.DATA_MATRIX_CODE == val[0][ind1])
-                            .all()
-                    )
+            web = ismet_auth(ecp_auth=ecp_auth, ecp_sign=ecp_sign)
 
-                    # print('len:', len(select_query))
-
-                    if len(select_query) != 0:
-                        continue
-
-                    sheet[f'A{last_row}'].value = str(val[0][ind1]).strip()
-                    last_row += 1
-
-                    session.add(Table(
-                        start_time=datetime.datetime.now(),
-                        status='new',
-                        DATA_MATRIX_CODE=val[0][ind1],
-                        GTIN_CODE=val[1][ind1],
-                        ID_INVOICE=urls.get(key)[0],
-                        URL_INVOICE=key,
-                        NEW_URL_INVOICE='',
-                        FILE_SAVED_PATH='',
-                        NUMBER_INVOICE=urls.get(key)[1],
-                        C_NAME_SOURCE_INVOICE=urls.get(key)[2],
-                        C_NAME_SHOP=urls.get(key)[3],
-                        DATE_INVOICE=urls.get(key)[4],
-                        NAME_WARES=val[2][ind1]
-                    ))
-
-                    added_any_row = True
-
-            if not added_any_row:
-                logger.info('----- ALREADY IN DB | NEXT -----')
+            if web is False:
                 continue
 
-            session.commit()
+            for url in urls:
 
-            error_msg = None
-            new_url = None
+                print(f"----- {url} -----")
 
-            report_path = ''
+                for tries in range(5):
 
-            try:
-                sheet[f'A{last_row}'].value = ''
+                    try:
 
-                file_path = fr'C:\Users\Abdykarim.D\PycharmProjects\robot-ismet-vyvod-iz-oborota\{folder}.xlsx'
+                        all_goods: dict = parse_all_gtins_to_out(web=web, url=url)
 
-                book.save(file_path)
+                        book = Workbook()
+                        sheet = book.active
 
-                book.close()
+                        last_row = 1
 
-                excel = win32.gencache.EnsureDispatch('Excel.Application')
-                excel.Visible = False
-                excel.DisplayAlerts = False
+                        added_any_row = False
 
-                wb = excel.Workbooks.Open(file_path)
-                wb.Save()
-                wb.Close()
+                        for key, val in all_goods.items():
+                            print(key, val)
+                            for ind1 in range(len(val[0])):
 
-                invoice_date: datetime = urls.get(url)[4]
-                print(invoice_date, invoice_date.strftime('%d_%m_%Y'))
-                print(invoice_date.year, invoice_date.month, invoice_date.day)
-                load_document_to_out(web=web, filepath=file_path, year=invoice_date.year, month=invoice_date.month, day=invoice_date.day)
+                                select_query = (
+                                    session.query(Table)
+                                        .filter(Table.DATA_MATRIX_CODE == val[0][ind1])
+                                        .all()
+                                )
 
-                select_all_wares_to_dropout(web=web, ecp_sign=ecp_sign)
+                                # print('len:', len(select_query))
 
-                new_url = web.driver.current_url
+                                if len(select_query) != 0:
+                                    continue
 
-                print(new_url)
+                                sheet[f'A{last_row}'].value = str(val[0][ind1]).strip()
+                                last_row += 1
 
-                report_path = wait_report_to_download(branch=folder, date_=invoice_date.strftime('%d_%m_%Y'))
+                                session.add(Table(
+                                    start_time=datetime.datetime.now(),
+                                    status='new',
+                                    DATA_MATRIX_CODE=val[0][ind1],
+                                    GTIN_CODE=val[1][ind1],
+                                    ID_INVOICE=urls.get(key)[0],
+                                    URL_INVOICE=key,
+                                    NEW_URL_INVOICE='',
+                                    FILE_SAVED_PATH='',
+                                    NUMBER_INVOICE=urls.get(key)[1],
+                                    C_NAME_SOURCE_INVOICE=urls.get(key)[2],
+                                    C_NAME_SHOP=urls.get(key)[3],
+                                    DATE_INVOICE=urls.get(key)[4],
+                                    NAME_WARES=val[2][ind1]
+                                ))
 
-            except Exception as error:
-                error_msg = str(error)[:500]
-                logger.info(f"ERROR OCCURED: {error}")
+                                added_any_row = True
 
-            sleep(0)
-            for key, val in all_goods.items():
-                for ind1 in range(len(val[0])):
+                        if not added_any_row:
+                            logger.info('----- ALREADY IN DB | NEXT -----')
+                            continue
 
-                    stmt = update(Table).where(
-                        Table.DATA_MATRIX_CODE == val[0][ind1]
-                    ).values(
-                        status='success',
-                        end_time=datetime.datetime.now(),
-                        error_message=error_msg,
-                        NEW_URL_INVOICE=new_url,
-                        FILE_SAVED_PATH=report_path
-                    )
-                    session.execute(stmt)
+                        session.commit()
 
-            session.commit()
+                        error_msg = None
+                        new_url = None
 
-            logger.info('----- NEXT -----')
+                        report_path = ''
 
-        web.quit()
+                        try:
+                            sheet[f'A{last_row}'].value = ''
+
+                            file_path = os.path.join(working_path, f'{folder}.xlsx')
+
+                            book.save(file_path)
+
+                            book.close()
+
+                            excel = win32.gencache.EnsureDispatch('Excel.Application')
+                            excel.Visible = False
+                            excel.DisplayAlerts = False
+
+                            wb = excel.Workbooks.Open(file_path)
+                            wb.Save()
+                            wb.Close()
+
+                            invoice_date: datetime = urls.get(url)[4]
+                            print(invoice_date, invoice_date.strftime('%d_%m_%Y'))
+                            print(invoice_date.year, invoice_date.month, invoice_date.day)
+                            load_document_to_out(web=web, filepath=file_path, year=invoice_date.year, month=invoice_date.month, day=invoice_date.day)
+
+                            select_all_wares_to_dropout(web=web, ecp_sign=ecp_sign)
+
+                            new_url = web.driver.current_url
+
+                            print(new_url)
+
+                            # report_path = wait_report_to_download(branch=folder, date_=invoice_date.strftime('%d_%m_%Y'))
+
+                        except Exception as error:
+                            error_msg = str(error)[:500]
+                            logger.info(f"ERROR OCCURED: {error}")
+
+                        sleep(0)
+                        for key, val in all_goods.items():
+                            for ind1 in range(len(val[0])):
+
+                                stmt = update(Table).where(
+                                    Table.DATA_MATRIX_CODE == val[0][ind1]
+                                ).values(
+                                    status='success',
+                                    end_time=datetime.datetime.now(),
+                                    error_message=error_msg,
+                                    NEW_URL_INVOICE=new_url,
+                                    FILE_SAVED_PATH=report_path
+                                )
+                                session.execute(stmt)
+
+                        session.commit()
+
+                        break
+
+                    except Exception as error1:
+
+                        error_msg = str(error1)[:500]
+                        logger.warning(f'Error1 occured: {error1}')
+                        print(f'Error1 occured: {error1}')
+                        traceback.print_exc()
+                        sleep(10)
+
+                logger.info('----- NEXT -----')
+
+            web.quit()
+
+        except Exception as main_error:
+
+            logger.warning(f'Main error occured: {main_error}')
+            print(f'Main error occured: {main_error}')
+            traceback.print_exc()

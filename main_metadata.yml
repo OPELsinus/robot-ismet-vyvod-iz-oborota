@@ -1,10 +1,10 @@
-CompanyName: robot-report-gold
-FileDescription: robot-report-gold
-InternalName: robot-report-gold
-LegalCopyright: magnum research
-OriginalFilename: robot-report-gold
-ProductName: robot-report-gold
+CompanyName: robot-ismet-vyvod-iz-oborota
+FileDescription: robot-ismet-vyvod-iz-oborota
+InternalName: robot-ismet-vyvod-iz-oborota
+LegalCopyright: robot-ismet-vyvod-iz-oborota
+OriginalFilename: robot-ismet-vyvod-iz-oborota
+ProductName: robot-ismet-vyvod-iz-oborota
 Translation:
 - charsetID: 1200
   langID: 1033
-Version: 1.0.0.4
+Version: 1.0.0.11
