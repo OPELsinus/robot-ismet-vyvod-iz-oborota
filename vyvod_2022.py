@@ -26,9 +26,10 @@ Base = declarative_base()
 
 class Table(Base):
 
-    __tablename__ = "robot_ismet_vyvod_iz_oborota_copy_last_zaeazd" # robot_name.replace('-', '_')
+    __tablename__ = "robot_ismet_vyvod_iz_oborota_performer_whole"  # robot_name.replace('-', '_')
 
     start_time = Column(DateTime, default=None)
+    end_time = Column(DateTime, default=None)
     status = Column(String(128), default=None)
     error_message = Column(String(512), default=None)
 
@@ -52,7 +53,7 @@ class Table(Base):
 
 class Table2022(Base):
 
-    __tablename__ = f"{robot_name.replace('-', '_')}_all_turnover"
+    __tablename__ = f"{robot_name.replace('-', '_')}_dispatcher_whole"
 
     start_time = Column(DateTime, default=None)
     end_time = Column(DateTime, default=None)
@@ -138,16 +139,16 @@ if __name__ == '__main__':
 
     # part_length = len(list(os.listdir(ecp_paths))) // 5
 
-    if ip_address == '10.70.2.2':
-        branches = list(os.listdir(ecp_paths))[::2]
-    if ip_address == '10.70.2.9':
-        branches = list(os.listdir(ecp_paths))[1::2]
-    if ip_address == '10.70.2.10':
-        branches = list(os.listdir(ecp_paths))[1::2]
-    if ip_address == '10.70.2.11':
-        branches = list(os.listdir(ecp_paths))[::2]
-    if ip_address == '172.20.1.24':
-        branches = list(os.listdir(ecp_paths))[::-1]
+    # if ip_address == '10.70.2.2':
+    #     branches = list(os.listdir(ecp_paths))[::2]
+    # if ip_address == '10.70.2.9':
+    #     branches = list(os.listdir(ecp_paths))[1::2]
+    # if ip_address == '10.70.2.10':
+    #     branches = list(os.listdir(ecp_paths))[1::2]
+    # if ip_address == '10.70.2.11':
+    #     branches = list(os.listdir(ecp_paths))[::2]
+    # if ip_address == '172.20.1.24':
+    #     branches = list(os.listdir(ecp_paths))[::-1]
 
     for folder in branches:
 
@@ -159,8 +160,8 @@ if __name__ == '__main__':
         #     if not check_:
         #         continue
 
-        if folder not in ['Торговый зал АСФ №1', 'Торговый зал АСФ №18', 'Торговый зал АСФ №31', 'Торговый зал АСФ №50', 'Торговый зал АСФ №74', 'Торговый зал АФ №1', 'Торговый зал АФ №11', 'Торговый зал АФ №12', 'Торговый зал АФ №2', 'Торговый зал АФ №24', 'Торговый зал АФ №29', 'Торговый зал АФ №3', 'Торговый зал АФ №32', 'Торговый зал АФ №35', 'Торговый зал АФ №4', 'Торговый зал АФ №40', 'Торговый зал АФ №61', 'Торговый зал АФ №69', 'Торговый зал ТФ №1', 'Торговый зал ШФ №1']: # , 'Торговый зал ЕКФ №1'
-            continue
+        # if folder not in ['Торговый зал АСФ №1', 'Торговый зал АСФ №18', 'Торговый зал АСФ №31', 'Торговый зал АСФ №50', 'Торговый зал АСФ №74', 'Торговый зал АФ №1', 'Торговый зал АФ №11', 'Торговый зал АФ №12', 'Торговый зал АФ №2', 'Торговый зал АФ №24', 'Торговый зал АФ №29', 'Торговый зал АФ №3', 'Торговый зал АФ №32', 'Торговый зал АФ №35', 'Торговый зал АФ №4', 'Торговый зал АФ №40', 'Торговый зал АФ №61', 'Торговый зал АФ №69', 'Торговый зал ТФ №1', 'Торговый зал ШФ №1']: # , 'Торговый зал ЕКФ №1'
+        #     continue
 
         # if ip_address == '172.20.1.24':
         #     if folder == 'Торговый зал АСФ №41':
@@ -169,6 +170,10 @@ if __name__ == '__main__':
         #
         #     if not check_:
         #         continue
+
+        if folder != 'Торговый зал АСФ №40':
+            # check_ = True
+            continue
 
         logger.warning(f"Started {folder}")
 
@@ -311,7 +316,7 @@ if __name__ == '__main__':
 
                     print('saved')
 
-                    load_document_to_out(web=web, filepath=file_path, year=2022, month=12, day=31, url=document_api_url)
+                    load_document_to_out(web=web, filepath=file_path, year=2023, month=12, day=31, url=document_api_url)
 
                     select_all_wares_to_dropout(web=web, ecp_sign=ecp_sign)
 
@@ -335,6 +340,7 @@ if __name__ == '__main__':
 
             if saved:
                 logger.warning(f'{datetime.datetime.now()} | Marking as Succeed')
+                print(f'{datetime.datetime.now()} | Marking as Succeed')
                 for val_ in val:
                     data_matrix_code = str(val_.split('|-|-|')[0]).strip()
                     stmt = update(Table).where(Table.DATA_MATRIX_CODE == data_matrix_code).values(
@@ -348,6 +354,7 @@ if __name__ == '__main__':
 
             else:
                 logger.warning(f'{datetime.datetime.now()} | Marking as Failed')
+                print(f'{datetime.datetime.now()} | Marking as Failed')
                 for val_ in val:
                     data_matrix_code = str(val_.split('|-|-|')[0]).strip()
                     stmt = update(Table).where(

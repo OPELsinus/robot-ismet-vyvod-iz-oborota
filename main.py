@@ -67,18 +67,18 @@ if __name__ == '__main__':
     check_ = False
 
     branches = os.listdir(ecp_paths)
-
-    if ip_address == '10.70.2.11':
-        branches = branches[::2]
-
-    if ip_address == '10.70.2.9':
-        branches = branches[1::2]
-
-    if ip_address == '10.70.2.2':
-        branches = branches[-2::-2]
-
-    if ip_address == '172.20.1.24':
-        branches = branches[-1::-2]
+    #
+    # if ip_address == '10.70.2.11':
+    #     branches = branches[::2]
+    #
+    # if ip_address == '10.70.2.9':
+    #     branches = branches[1::2]
+    #
+    # if ip_address == '10.70.2.2':
+    #     branches = branches[-2::-2]
+    #
+    # if ip_address == '172.20.1.24':
+    #     branches = branches[-1::-2]
 
     for folder in branches:
 

@@ -177,6 +177,9 @@ def select_all_wares_to_dropout(web: Web, ecp_sign: str):
     if web.wait_element("//div[contains(text(), 'Невозможно выполнить запрос')]", timeout=2):  # timeout = 30
         raise Exception("Error when loading an Excel")
 
+    if not web.wait_element("//div[@class='rt-th sc-kkGfuU dzsQrm']/div/div/div", timeout=timeout_):
+        raise Exception("Error when loading an Excel")
+
     while True:
 
         web.wait_element("//div[@class='rt-th sc-kkGfuU dzsQrm']/div/div/div", timeout=timeout_)
