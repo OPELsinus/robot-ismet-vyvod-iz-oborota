@@ -20,7 +20,7 @@ months = ['', 'январь', 'февраль', 'март', 'апрель', 'м�
 
 def ismet_auth(ecp_auth: str, ecp_sign: str):
 
-    for _ in range(3):
+    for _ in range(1):
 
         try:
             web = Web()

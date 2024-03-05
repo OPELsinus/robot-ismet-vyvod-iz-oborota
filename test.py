@@ -24,4 +24,4 @@ import urllib.parse
 from openpyxl import load_workbook
 a = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11]
 
-print(a[-2::-2])
+print(a[-1::-2])

@@ -17,7 +17,7 @@ from openpyxl import load_workbook, Workbook
 
 from config import logger, engine_kwargs, robot_name, smtp_host, smtp_author, owa_username, owa_password, ecp_paths, ip_address
 
-from sqlalchemy import create_engine, Column, Integer, String, DateTime, MetaData, Table, Date, Boolean, select, update
+from sqlalchemy import create_engine, Column, Integer, String, DateTime, MetaData, Table, Date, Boolean, select, update, delete
 from sqlalchemy.orm import declarative_base, sessionmaker
 
 from tools.net_use import net_use
@@ -31,7 +31,7 @@ Base = declarative_base()
 
 class Table(Base):
 
-    __tablename__ = f"{robot_name.replace('-', '_')}_dispatcher_whole"
+    __tablename__ = f"{robot_name.replace('-', '_')}_dispatcher_all_branches"
 
     start_time = Column(DateTime, default=None)
     end_time = Column(DateTime, default=None)
@@ -49,14 +49,42 @@ class Table(Base):
         m = self.__dict__
         return m
 
+class Table2022(Base):
 
-if __name__ == '__main__':
+    __tablename__ = f"{robot_name.replace('-', '_')}_performer_all_branches"
+
+    start_time = Column(DateTime, default=None)
+    end_time = Column(DateTime, default=None)
+    status = Column(String(128), default=None)
+    error_message = Column(String(512), default=None)
+
+    DATA_MATRIX_CODE = Column(String(256), primary_key=True)
+    GTIN_CODE = Column(String(256))
+    ID_INVOICE = Column(String(256))
+    NUMBER_INVOICE = Column(String(256))
+    URL_INVOICE = Column(String(512))
+    NEW_URL_INVOICE = Column(String(512))
+    FILE_SAVED_PATH = Column(String(512))
+    C_NAME_SOURCE_INVOICE = Column(String(512))
+    C_NAME_SHOP = Column(String(512))
+    DATE_INVOICE = Column(DateTime)
+    NAME_WARES = Column(String(512))
+
+    @property
+    def dict(self):
+        m = self.__dict__
+        return m
+
+
+def dispatcher():
 
     if True:
 
         net_use(ecp_paths, owa_username, owa_password)
 
         check_ = False
+
+        total_added = 0
 
         branches = list(os.listdir(ecp_paths))[::2]
 
@@ -75,7 +103,16 @@ if __name__ == '__main__':
         #     branches = list(os.listdir(ecp_paths))[::2]
         # if ip_address == '172.20.1.24':
         #     branches = list(os.listdir(ecp_paths))[::-1]
-
+        # ip_address = '10.70.2.5'
+        if ip_address == '10.70.2.6':
+            branches = list(os.listdir(ecp_paths))[::2]
+        if ip_address == '10.70.2.52':
+            branches = list(os.listdir(ecp_paths))[1::2]
+        if ip_address == '10.70.2.5':
+            branches = list(os.listdir(ecp_paths))[::-2]
+        if ip_address == '10.70.2.51':
+            branches = list(os.listdir(ecp_paths))[-2::-2]
+        print('branchikos', branches)
         for folder in branches:
 
             # if folder in ['Торговый зал АСФ №1', 'Торговый зал АСФ №11', 'Торговый зал АСФ №12', 'Торговый зал АСФ №13', 'Торговый зал АСФ №16', 'Торговый зал АСФ №17', 'Торговый зал АСФ №18', 'Торговый зал АСФ №19', 'Торговый зал АСФ №2', 'Торговый зал АСФ №20', 'Торговый зал АСФ №21', 'Торговый зал АСФ №23', 'Торговый зал АСФ №24', 'Торговый зал АСФ №25', 'Торговый зал АСФ №26', 'Торговый зал АСФ №27', 'Торговый зал АСФ №28', 'Торговый зал АСФ №29', 'Торговый зал АСФ №3', 'Торговый зал АСФ №30', 'Торговый зал АСФ №31', 'Торговый зал АСФ №32', 'Торговый зал АСФ №33', 'Торговый зал АСФ №34', 'Торговый зал АСФ №37', 'Торговый зал АСФ №39', 'Торговый зал АСФ №4', 'Торговый зал АСФ №40', 'Торговый зал АСФ №41', 'Торговый зал АСФ №42', 'Торговый зал АСФ №45', 'Торговый зал АСФ №5', 'Торговый зал АСФ №50', 'Торговый зал АСФ №51', 'Торговый зал АСФ №53', 'Торговый зал АСФ №54', 'Торговый зал АСФ №56', 'Торговый зал АСФ №57', 'Торговый зал АСФ №58', 'Торговый зал АСФ №63', 'Торговый зал АСФ №7', 'Торговый зал АСФ №8', 'Торговый зал АСФ №81', 'Торговый зал АСФ №9', 'Торговый зал АФ №1', 'Торговый зал АФ №11', 'Торговый зал АФ №16', 'Торговый зал АФ №17', 'Торговый зал АФ №18', 'Торговый зал АФ №19', 'Торговый зал АФ №2', 'Торговый зал АФ №20', 'Торговый зал АФ №21', 'Торговый зал АФ №23', 'Торговый зал АФ №24', 'Торговый зал АФ №25', 'Торговый зал АФ №26', 'Торговый зал АФ №28', 'Торговый зал АФ №29', 'Торговый зал АФ №3', 'Торговый зал АФ №30', 'Торговый зал АФ №31', 'Торговый зал АФ №32', 'Торговый зал АФ №33', 'Торговый зал АФ №34', 'Торговый зал АФ №36', 'Торговый зал АФ №37', 'Торговый зал АФ №39', 'Торговый зал АФ №4', 'Торговый зал АФ №40', 'Торговый зал АФ №41', 'Торговый зал АФ №43', 'Торговый зал АФ №44', 'Торговый зал АФ №45', 'Торговый зал АФ №46', 'Торговый зал АФ №47', 'Торговый зал АФ №48', 'Торговый зал АФ №49', 'Торговый зал АФ №5', 'Торговый зал АФ №51', 'Торговый зал АФ №52', 'Торговый зал АФ №53', 'Торговый зал АФ №54', 'Торговый зал АФ №56', 'Торговый зал АФ №58', 'Торговый зал АФ №59', 'Торговый зал АФ №6', 'Торговый зал АФ №61', 'Торговый зал АФ №64', 'Торговый зал АФ №65', 'Торговый зал АФ №67', 'Торговый зал АФ №68', 'Торговый зал АФ №69', 'Торговый зал АФ №9', 'Торговый зал ЕКФ №1', 'Торговый зал КЗФ №1', 'Торговый зал КЗФ №2', 'Торговый зал КФ №4', 'Торговый зал КФ №6', 'Торговый зал КФ №7', 'Торговый зал ППФ №1', 'Торговый зал ППФ №10', 'Торговый зал ППФ №11', 'Торговый зал ППФ №13', 'Торговый зал ППФ №14', 'Торговый зал ППФ №16', 'Торговый зал ППФ №17', 'Торговый зал ППФ №2', 'Торговый зал ППФ №20', 'Торговый зал ППФ №21', 'Торговый зал ППФ №22', 'Торговый зал ППФ №3', 'Торговый зал ППФ №5', 'Торговый зал ППФ №6', 'Торговый зал ППФ №9', 'Торговый зал ТФ №1', 'Торговый зал ТФ №2', 'Торговый зал ТФ №3', 'Торговый зал УКФ №2', 'Торговый зал ФКС №2', 'Торговый зал ШФ №1', 'Торговый зал ШФ №10', 'Торговый зал ШФ №12', 'Торговый зал ШФ №14', 'Торговый зал ШФ №2', 'Торговый зал ШФ №4', 'Торговый зал ШФ №5', 'Торговый зал ШФ №6', 'Торговый зал ШФ №7']:
@@ -83,7 +120,7 @@ if __name__ == '__main__':
             if 'РЦ' in folder:
                 continue
 
-            if folder != 'Торговый зал АСФ №40':
+            if folder == 'Торговый зал АСФ №40':
                 # check_ = True
                 continue
             #
@@ -198,9 +235,9 @@ if __name__ == '__main__':
                                 break
                     # * --------------------------------------
 
-                    pageSizeCalc = 1
+                    pageSizeCalc = 50
 
-                    for mnozhitel in range(70, 1, -1):
+                    for mnozhitel in range(70, 49, -1):
                         if total_pages % mnozhitel == 0:
                             pageSizeCalc = mnozhitel
                             break
@@ -225,30 +262,16 @@ if __name__ == '__main__':
                             "groupBy": [],
                             "sorts": [{"column": "status", "direction": "ASC"}]
                         }
-                        # print(f"requests.post('https://goods.prod.markirovka.ismet.kz/api/km-grid/getPageData', data=json.dumps(data), cookies={cookies_dict}, headers=headers, verify=False, timeout=180)")
 
-                        # print(cookies_dict)
-                        # print(headers)
                         for i in range(3):
                             try:
-                                # print(1)
+
                                 r = requests.post('https://goods.prod.markirovka.ismet.kz/api/km-grid/getPageData', data=json.dumps(data), cookies=cookies_dict, headers=headers,
                                                   verify=False, timeout=180)
                                 quantity = r.text
-                                # print(quantity)
-                                # logger.warning('------------------------------')
-                                # print(r)
+
                                 json_ = json.loads(quantity)
-                                # total_pages = ceil(int(json_["count"]) / pageSize)
-                                # print('------------------------------')
-                                # print(total_pages)
-                                # print(json_)
-                                # print(json_["kizes"])
-                                # print('===')
-                                # for indd, product in enumerate(json_["kizes"]):
-                                #     print(indd, product['cis'])
-                                # print('------------------------------')
-                                # print(2)
+
                                 for product in json_["kizes"]:
 
                                     select_query = (
@@ -257,9 +280,18 @@ if __name__ == '__main__':
                                             .all()
                                     )
                                     if len(select_query) != 0:
-                                        continue
-                                    # print(product['cis'], product['producerId']['name'], f"https://goods.prod.markirovka.ismet.kz/{urllib.parse.quote(product['cis'])}")
+                                        delete_dispatcher = delete(Table).where(Table.DATA_MATRIX_CODE == product['cis'])
+                                        session.execute(delete_dispatcher)
+
+                                        with suppress(Exception):
+                                            delete_dispatcher = delete(Table2022).where(Table2022.DATA_MATRIX_CODE == product['cis'])
+                                            session.execute(delete_dispatcher)
+                                        # print('Continued', product['cis'], len(select_query))
+                                        # continue
+
                                     try:
+                                        print('Adding')
+                                        total_added += 1
                                         session.add(Table(
                                             start_time=datetime.datetime.now(),
                                             status='new',
@@ -269,15 +301,18 @@ if __name__ == '__main__':
                                             C_NAME_SHOP=folder,
                                             DATE_INVOICE=datetime.datetime.fromtimestamp(product['emissionDate'] / 1000.0).strftime('%d.%m.%Y')
                                         ))
+                                        session.commit()
                                     except Exception as err:
                                         print("EROR1")
                                         logger.warning(f"ERRORCHIK: {err}")
+
+                                print('LEN:', len(json_["kizes"]))
                                 # sleep(10000)
                                 # print(3)
                                 break
                             except Exception as err1:
-                                print("EROR")
-                                logger.warning(f"ERRORKIN: {err1}")
+                                print("EROR2")
+                                logger.warning(f"ERRORKIN: {err1} | ")
                                 if 'count' in str(err1):
                                     break
                         page += 1
@@ -289,6 +324,8 @@ if __name__ == '__main__':
             session.close()
 
             web.quit()
+
+        return 'good' if total_added > 0 else 'bad'
 
             # sleep(10000)
 
@@ -392,3 +429,6 @@ if __name__ == '__main__':
             #     web.quit()
             # session.close()
 
+
+if __name__ == '__main__':
+    dispatcher()

@@ -26,7 +26,7 @@ Base = declarative_base()
 
 class Table(Base):
 
-    __tablename__ = "robot_ismet_vyvod_iz_oborota_performer_whole"  # robot_name.replace('-', '_')
+    __tablename__ = "robot_ismet_vyvod_iz_oborota_performer_all_branches"  # robot_name.replace('-', '_')
 
     start_time = Column(DateTime, default=None)
     end_time = Column(DateTime, default=None)
@@ -53,7 +53,7 @@ class Table(Base):
 
 class Table2022(Base):
 
-    __tablename__ = f"{robot_name.replace('-', '_')}_dispatcher_whole"
+    __tablename__ = f"{robot_name.replace('-', '_')}_dispatcher_all_branches"
 
     start_time = Column(DateTime, default=None)
     end_time = Column(DateTime, default=None)
@@ -112,7 +112,7 @@ def fetching_unique_codes_2022(branch: str, update_to_success=False):
         return 0
 
 
-if __name__ == '__main__':
+def vyvodbek():
 
     Session = sessionmaker()
 
@@ -139,14 +139,14 @@ if __name__ == '__main__':
 
     # part_length = len(list(os.listdir(ecp_paths))) // 5
 
-    # if ip_address == '10.70.2.2':
-    #     branches = list(os.listdir(ecp_paths))[::2]
-    # if ip_address == '10.70.2.9':
-    #     branches = list(os.listdir(ecp_paths))[1::2]
-    # if ip_address == '10.70.2.10':
-    #     branches = list(os.listdir(ecp_paths))[1::2]
-    # if ip_address == '10.70.2.11':
-    #     branches = list(os.listdir(ecp_paths))[::2]
+    if ip_address == '10.70.2.6':
+        branches = list(os.listdir(ecp_paths))[::2]
+    if ip_address == '10.70.2.52':
+        branches = list(os.listdir(ecp_paths))[1::2]
+    if ip_address == '10.70.2.5':
+        branches = list(os.listdir(ecp_paths))[::-2]
+    if ip_address == '10.70.2.51':
+        branches = list(os.listdir(ecp_paths))[-2::-2]
     # if ip_address == '172.20.1.24':
     #     branches = list(os.listdir(ecp_paths))[::-1]
 
@@ -171,7 +171,7 @@ if __name__ == '__main__':
         #     if not check_:
         #         continue
 
-        if folder != 'Торговый зал АСФ №40':
+        if folder == 'Торговый зал АСФ №40':
             # check_ = True
             continue
 
@@ -203,11 +203,6 @@ if __name__ == '__main__':
         while start < len(vals):
 
             logger.warning(f"Current slice: {start} - {end} | {len(vals)}")
-
-            web = ismet_auth(ecp_auth=ecp_auth, ecp_sign=ecp_sign)
-
-            if web is None:
-                break
 
             val = vals[start:end]
             start = end
@@ -298,6 +293,11 @@ if __name__ == '__main__':
 
             saved = False
 
+            web = ismet_auth(ecp_auth=ecp_auth, ecp_sign=ecp_sign)
+
+            if web is None:
+                break
+
             document_api_url = 'https://goods.prod.markirovka.ismet.kz/api/v3/facade/marked_products/search-by-xls-cis-list'
 
             for _ in range(1000):
@@ -381,3 +381,6 @@ if __name__ == '__main__':
 
     session.close()
 
+
+if __name__ == '__main__':
+    vyvodbek()
