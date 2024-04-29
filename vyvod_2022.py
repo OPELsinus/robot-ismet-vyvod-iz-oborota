@@ -26,7 +26,7 @@ Base = declarative_base()
 
 class Table(Base):
 
-    __tablename__ = "robot_ismet_vyvod_iz_oborota_performer_all_branches"  # robot_name.replace('-', '_')
+    __tablename__ = "robot_ismet_vyvod_iz_oborota_performer_prod"  # robot_name.replace('-', '_')
 
     start_time = Column(DateTime, default=None)
     end_time = Column(DateTime, default=None)
@@ -53,7 +53,7 @@ class Table(Base):
 
 class Table2022(Base):
 
-    __tablename__ = f"{robot_name.replace('-', '_')}_dispatcher_all_branches"
+    __tablename__ = f"{robot_name.replace('-', '_')}_dispatcher_prod"
 
     start_time = Column(DateTime, default=None)
     end_time = Column(DateTime, default=None)
@@ -139,14 +139,14 @@ def vyvodbek():
 
     # part_length = len(list(os.listdir(ecp_paths))) // 5
 
-    if ip_address == '10.70.2.6':
-        branches = list(os.listdir(ecp_paths))[::2]
-    if ip_address == '10.70.2.52':
-        branches = list(os.listdir(ecp_paths))[1::2]
-    if ip_address == '10.70.2.5':
-        branches = list(os.listdir(ecp_paths))[::-2]
-    if ip_address == '10.70.2.51':
-        branches = list(os.listdir(ecp_paths))[-2::-2]
+    # if ip_address == '10.70.2.6':
+    #     branches = list(os.listdir(ecp_paths))[::2]
+    # if ip_address == '10.70.2.52':
+    #     branches = list(os.listdir(ecp_paths))[1::2]
+    # if ip_address == '10.70.2.5':
+    #     branches = list(os.listdir(ecp_paths))[::-2]
+    # if ip_address == '10.70.2.51':
+    #     branches = list(os.listdir(ecp_paths))[-2::-2]
     # if ip_address == '172.20.1.24':
     #     branches = list(os.listdir(ecp_paths))[::-1]
 
@@ -171,9 +171,9 @@ def vyvodbek():
         #     if not check_:
         #         continue
 
-        if folder == 'Торговый зал АСФ №40':
-            # check_ = True
-            continue
+        # if folder == 'Торговый зал АСФ №40':
+        #     # check_ = True
+        #     continue
 
         logger.warning(f"Started {folder}")
 

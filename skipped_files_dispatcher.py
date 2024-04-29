@@ -15,7 +15,7 @@ import win32com.client as win32
 
 from openpyxl import load_workbook, Workbook
 
-from config import logger, engine_kwargs, robot_name, smtp_host, smtp_author, owa_username, owa_password, ecp_paths, ip_address
+from config import logger, engine_kwargs, robot_name, smtp_host, smtp_author, owa_username, owa_password, ecp_paths, ip_address, end_date, start_date
 
 from sqlalchemy import create_engine, Column, Integer, String, DateTime, MetaData, Table, Date, Boolean, select, update, delete
 from sqlalchemy.orm import declarative_base, sessionmaker
@@ -31,7 +31,7 @@ Base = declarative_base()
 
 class Table(Base):
 
-    __tablename__ = f"{robot_name.replace('-', '_')}_dispatcher_all_branches"
+    __tablename__ = f"{robot_name.replace('-', '_')}_dispatcher_prod"
 
     start_time = Column(DateTime, default=None)
     end_time = Column(DateTime, default=None)
@@ -51,7 +51,7 @@ class Table(Base):
 
 class Table2022(Base):
 
-    __tablename__ = f"{robot_name.replace('-', '_')}_performer_all_branches"
+    __tablename__ = f"{robot_name.replace('-', '_')}_performer_prod"
 
     start_time = Column(DateTime, default=None)
     end_time = Column(DateTime, default=None)
@@ -104,14 +104,14 @@ def dispatcher():
         # if ip_address == '172.20.1.24':
         #     branches = list(os.listdir(ecp_paths))[::-1]
         # ip_address = '10.70.2.5'
-        if ip_address == '10.70.2.6':
-            branches = list(os.listdir(ecp_paths))[::2]
-        if ip_address == '10.70.2.52':
-            branches = list(os.listdir(ecp_paths))[1::2]
-        if ip_address == '10.70.2.5':
-            branches = list(os.listdir(ecp_paths))[::-2]
-        if ip_address == '10.70.2.51':
-            branches = list(os.listdir(ecp_paths))[-2::-2]
+        # if ip_address == '10.70.2.6':
+        #     branches = list(os.listdir(ecp_paths))[::2]
+        # if ip_address == '10.70.2.52':
+        #     branches = list(os.listdir(ecp_paths))[1::2]
+        # if ip_address == '10.70.2.5':
+        #     branches = list(os.listdir(ecp_paths))[::-2]
+        # if ip_address == '10.70.2.51':
+        #     branches = list(os.listdir(ecp_paths))[-2::-2]
         print('branchikos', branches)
         for folder in branches:
 
@@ -120,10 +120,10 @@ def dispatcher():
             if 'РЦ' in folder:
                 continue
 
-            if folder == 'Торговый зал АСФ №40':
-                # check_ = True
-                continue
-            #
+            # if folder == 'Торговый зал АСФ №40':
+            #     # check_ = True
+            #     continue
+            # #
             # if not check_:
             #     continue
 
@@ -191,132 +191,133 @@ def dispatcher():
             pageSize = 1
             page = 0
 
-            for year in [2022, 2023]:
-                for month in range(1, 13):
+            # for year in [2022, 2023]:
+            #     for month in range(1, 13):
 
-                    total_pages = 1
-                    page = 0
+            total_pages = 1
+            page = 0
 
-                    if month == 12:
-                        last_day = (datetime.date(year + 1, 1, 1) - datetime.timedelta(days=1)).day
-                    else:
-                        last_day = (datetime.date(year, month + 1, 1) - datetime.timedelta(days=1)).day
+            # if month == 12:
+            #     last_day = (datetime.date(year + 1, 1, 1) - datetime.timedelta(days=1)).day
+            # else:
+            #     last_day = (datetime.date(year, month + 1, 1) - datetime.timedelta(days=1)).day
+            #
+            # month_ = f"0{month}" if month < 10 else str(month)
+            # last_day = f"0{last_day}" if last_day < 10 else str(last_day)
 
-                    month_ = f"0{month}" if month < 10 else str(month)
-                    last_day = f"0{last_day}" if last_day < 10 else str(last_day)
-                    print(f"Started year: {year}, month: {month_}, last day: {last_day}")
+            print(f"Started date: {start_date}")
 
-                    # * ----- Get total els in the month -----
-                    data = {
-                        "pageSize": pageSize,
-                        "currentPage": page,
-                        "filters": [
-                            {"operator": "=", "column": "owner", "filterTerm": "120641002344"},
-                            {"operator": "=", "column": "status", "filterTerm": 2},
-                            {"operator": ">=", "column": "emissionDate", "filterTerm": f"{year}-{month_}-01T00:00:00"},
-                            {"operator": "<=", "column": "emissionDate", "filterTerm": f"{year}-{month_}-{last_day}T23:59:59"}
-                        ],
-                        "groupBy": [],
-                        "sorts": [{"column": "status", "direction": "ASC"}]
-                    }
-                    for i in range(3):
-                        try:
-                            # print(1)
-                            r = requests.post('https://goods.prod.markirovka.ismet.kz/api/km-grid/getPageData', data=json.dumps(data), cookies=cookies_dict, headers=headers,
-                                              verify=False, timeout=180)
-                            quantity = r.text
-                            json_ = json.loads(quantity)
-                            total_pages = ceil(int(json_["count"]) / pageSize)
-                            break
-                        except Exception as err1:
-                            print("EROR")
-                            logger.warning(f"ERRORKIN: {err1}")
-                            if 'count' in str(err1):
-                                break
-                    # * --------------------------------------
+            # * ----- Get total els in the month -----
+            data = {
+                "pageSize": pageSize,
+                "currentPage": page,
+                "filters": [
+                    {"operator": "=", "column": "owner", "filterTerm": "120641002344"},
+                    {"operator": "=", "column": "status", "filterTerm": 2},
+                    {"operator": ">=", "column": "emissionDate", "filterTerm": f"{start_date}T00:00:00"},
+                    {"operator": "<=", "column": "emissionDate", "filterTerm": f"{end_date}T23:59:59"}
+                ],
+                "groupBy": [],
+                "sorts": [{"column": "status", "direction": "ASC"}]
+            }
+            for i in range(3):
+                try:
+                    # print(1)
+                    r = requests.post('https://goods.prod.markirovka.ismet.kz/api/km-grid/getPageData', data=json.dumps(data), cookies=cookies_dict, headers=headers,
+                                      verify=False, timeout=180)
+                    quantity = r.text
+                    json_ = json.loads(quantity)
+                    total_pages = ceil(int(json_["count"]) / pageSize)
+                    break
+                except Exception as err1:
+                    print("EROR")
+                    logger.warning(f"ERRORKIN: {err1}")
+                    if 'count' in str(err1):
+                        break
+            # * --------------------------------------
 
-                    pageSizeCalc = 50
+            pageSizeCalc = 50
 
-                    for mnozhitel in range(70, 49, -1):
-                        if total_pages % mnozhitel == 0:
-                            pageSizeCalc = mnozhitel
-                            break
+            for mnozhitel in range(70, 49, -1):
+                if total_pages % mnozhitel == 0:
+                    pageSizeCalc = mnozhitel
+                    break
 
-                    logger.warning(f"MNOZHITEL: {pageSizeCalc} | TOTAL PAGES: {total_pages}")
+            logger.warning(f"MNOZHITEL: {pageSizeCalc} | TOTAL PAGES: {total_pages}")
 
-                    print(page, total_pages % pageSizeCalc, page <= total_pages % pageSizeCalc)
-                    total_iters = total_pages / pageSizeCalc
-                    # while page <= total_pages % pageSizeCalc + 1:
-                    for i in range(int(total_pages / pageSizeCalc)):
-                        if page % 1 == 0:
-                            logger.warning(f'PAGE: {page}')
-                        data = {
-                            "pageSize": pageSizeCalc,
-                            "currentPage": page,
-                            "filters": [
-                                {"operator": "=", "column": "owner", "filterTerm": "120641002344"},
-                                {"operator": "=", "column": "status", "filterTerm": 2},
-                                {"operator": ">=", "column": "emissionDate", "filterTerm": f"{year}-{month_}-01T00:00:00"},
-                                {"operator": "<=", "column": "emissionDate", "filterTerm": f"{year}-{month_}-{last_day}T23:59:59"}
-                            ],
-                            "groupBy": [],
-                            "sorts": [{"column": "status", "direction": "ASC"}]
-                        }
+            print(page, total_pages % pageSizeCalc, page <= total_pages % pageSizeCalc)
+            total_iters = total_pages / pageSizeCalc
+            # while page <= total_pages % pageSizeCalc + 1:
+            for i in range(int(total_pages / pageSizeCalc)):
+                if page % 1 == 0:
+                    logger.warning(f'PAGE: {page}')
+                data = {
+                    "pageSize": pageSizeCalc,
+                    "currentPage": page,
+                    "filters": [
+                        {"operator": "=", "column": "owner", "filterTerm": "120641002344"},
+                        {"operator": "=", "column": "status", "filterTerm": 2},
+                        {"operator": ">=", "column": "emissionDate", "filterTerm": f"{year}-{month_}-01T00:00:00"},
+                        {"operator": "<=", "column": "emissionDate", "filterTerm": f"{year}-{month_}-{last_day}T23:59:59"}
+                    ],
+                    "groupBy": [],
+                    "sorts": [{"column": "status", "direction": "ASC"}]
+                }
 
-                        for i in range(3):
+                for i in range(3):
+                    try:
+
+                        r = requests.post('https://goods.prod.markirovka.ismet.kz/api/km-grid/getPageData', data=json.dumps(data), cookies=cookies_dict, headers=headers,
+                                          verify=False, timeout=180)
+                        quantity = r.text
+
+                        json_ = json.loads(quantity)
+
+                        for product in json_["kizes"]:
+
+                            select_query = (
+                                session.query(Table)
+                                    .filter(Table.DATA_MATRIX_CODE == product['cis'])
+                                    .all()
+                            )
+                            if len(select_query) != 0:
+                                delete_dispatcher = delete(Table).where(Table.DATA_MATRIX_CODE == product['cis'])
+                                session.execute(delete_dispatcher)
+
+                                with suppress(Exception):
+                                    delete_dispatcher = delete(Table2022).where(Table2022.DATA_MATRIX_CODE == product['cis'])
+                                    session.execute(delete_dispatcher)
+                                # print('Continued', product['cis'], len(select_query))
+                                # continue
+
                             try:
+                                print('Adding')
+                                total_added += 1
+                                session.add(Table(
+                                    start_time=datetime.datetime.now(),
+                                    status='new',
+                                    URL_INVOICE=f"https://goods.prod.markirovka.ismet.kz/cis/list/{urllib.parse.quote(product['cis'])}",
+                                    DATA_MATRIX_CODE=product['cis'],
+                                    C_NAME_SOURCE_INVOICE=product['producerId']['name'],
+                                    C_NAME_SHOP=folder,
+                                    DATE_INVOICE=datetime.datetime.fromtimestamp(product['emissionDate'] / 1000.0).strftime('%d.%m.%Y')
+                                ))
+                                session.commit()
+                            except Exception as err:
+                                print("EROR1")
+                                logger.warning(f"ERRORCHIK: {err}")
 
-                                r = requests.post('https://goods.prod.markirovka.ismet.kz/api/km-grid/getPageData', data=json.dumps(data), cookies=cookies_dict, headers=headers,
-                                                  verify=False, timeout=180)
-                                quantity = r.text
-
-                                json_ = json.loads(quantity)
-
-                                for product in json_["kizes"]:
-
-                                    select_query = (
-                                        session.query(Table)
-                                            .filter(Table.DATA_MATRIX_CODE == product['cis'])
-                                            .all()
-                                    )
-                                    if len(select_query) != 0:
-                                        delete_dispatcher = delete(Table).where(Table.DATA_MATRIX_CODE == product['cis'])
-                                        session.execute(delete_dispatcher)
-
-                                        with suppress(Exception):
-                                            delete_dispatcher = delete(Table2022).where(Table2022.DATA_MATRIX_CODE == product['cis'])
-                                            session.execute(delete_dispatcher)
-                                        # print('Continued', product['cis'], len(select_query))
-                                        # continue
-
-                                    try:
-                                        print('Adding')
-                                        total_added += 1
-                                        session.add(Table(
-                                            start_time=datetime.datetime.now(),
-                                            status='new',
-                                            URL_INVOICE=f"https://goods.prod.markirovka.ismet.kz/cis/list/{urllib.parse.quote(product['cis'])}",
-                                            DATA_MATRIX_CODE=product['cis'],
-                                            C_NAME_SOURCE_INVOICE=product['producerId']['name'],
-                                            C_NAME_SHOP=folder,
-                                            DATE_INVOICE=datetime.datetime.fromtimestamp(product['emissionDate'] / 1000.0).strftime('%d.%m.%Y')
-                                        ))
-                                        session.commit()
-                                    except Exception as err:
-                                        print("EROR1")
-                                        logger.warning(f"ERRORCHIK: {err}")
-
-                                print('LEN:', len(json_["kizes"]))
-                                # sleep(10000)
-                                # print(3)
-                                break
-                            except Exception as err1:
-                                print("EROR2")
-                                logger.warning(f"ERRORKIN: {err1} | ")
-                                if 'count' in str(err1):
-                                    break
-                        page += 1
-                    # sleep(1000)
+                        print('LEN:', len(json_["kizes"]))
+                        # sleep(10000)
+                        # print(3)
+                        break
+                    except Exception as err1:
+                        print("EROR2")
+                        logger.warning(f"ERRORKIN: {err1} | ")
+                        if 'count' in str(err1):
+                            break
+                page += 1
+            # sleep(1000)
             logger.warning(f'FINISHED {folder}')
             # sleep(10000)
 

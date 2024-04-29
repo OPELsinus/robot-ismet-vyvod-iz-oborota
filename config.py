@@ -74,7 +74,9 @@ project_path.mkdir(exist_ok=True, parents=True)
 config_path = project_path.joinpath('config.json')
 
 # config_path = local_path.joinpath(f'.agent\\{robot_name}\\config.json')
-# config_data = json_read(config_path)
+config_data = json_read(config_path)
+start_date = config_data['start_date']
+end_date = config_data['end_date']
 # chat_id = config_data['chat_id']
 # main_folder = config_data['main_folder']
 # mapping_file = config_data['mapping_file']
